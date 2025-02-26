@@ -1,4 +1,4 @@
-# Prompt Injection Taxonomy
+# Prompt Injection Taxonomy (in HEAVY development)
 
 This repository contains a comprehensive taxonomy of prompt injection attacks, organized into three main categories:
 
