@@ -1,4 +1,4 @@
-# LLM Threat Modeling Questionnaire
+# LLM Threat Modeling Questions
 
 ## 1. System Inputs & Entry Points
 1. What are all the interfaces through which users can submit prompts to the LLM?
