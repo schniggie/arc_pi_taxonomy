@@ -14,7 +14,7 @@ Confusing the model by adding code-type end sequences. Hopefully disrupting the 
 - Example: Used in several Pliny Jailbreaks
 
 
-# Real-World Examples of "End Sequences" Attacks
+## Real-World Examples of "End Sequences" Attacks
 
 1. **Pliny Jailbreak (L1B3RT4S)**
    - HTML-style fake boundaries: `.-.-.-.-=/L\O/V\E/\P/L\I/N\Y/\L/O\V\E=-.-.-.-.`  
@@ -59,3 +59,7 @@ Confusing the model by adding code-type end sequences. Hopefully disrupting the 
 10. **"Fake Role" Injection Techniques**
    - Simulated role endings: `<|system|>`, `<|user|>`, `<|endofprompt|>`  
    - XML and script closures: `]]>`, `</script>`
+
+## Notes
+
+It's also important to note that the more "code-based" end sequences are more useful to attack AI agents with access to tools dealing with those languages. 
