@@ -42,4 +42,8 @@ This project is actively evolving! Contributions, corrections, and additions are
 
 ## 📜 License  
 
-This work is licensed under the **Creative Commons Attribution 4.0 International (CC BY 4.0) License**.  
+This taxonomy is licensed under a [Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+
+If you use or adapt this methodology in any form—blogs, videos, training, or derivative methodologies—you must explicitly credit the original source as follows:
+
+> *"This content/methodology is based Arcanum Information Securities Prompt Inejction Taxonomy by Jason Haddix, available at https://github.com/Arcanum-Sec/arc_pi_taxonomy/
