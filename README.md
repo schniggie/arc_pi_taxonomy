@@ -40,10 +40,12 @@ Each folder contains individual Markdown files with **detailed descriptions of s
 
 This project is actively evolving! Contributions, corrections, and additions are encouraged. Please follow the repository’s contribution guidelines to submit new findings or improvements.  
 
-## 📜 License  
+## 📜 License & Attribution
 
-This taxonomy is licensed under a [Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+This methodology and repository content are licensed under a [Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
 
-If you use or adapt this methodology in any form—blogs, videos, training, or derivative methodologies—you must explicitly credit the original source as follows:
+If you use, reference, or build upon this methodology, you **must** explicitly attribute the original work as follows:
 
-> *"This content/methodology is based Arcanum Information Securities Prompt Inejction Taxonomy by Jason Haddix, available at https://github.com/Arcanum-Sec/arc_pi_taxonomy/
+> *"This methodology/content is based on the [Arcanum Prompt Injection Taxonomy](https://github.com/Arcanum-Sec/arc_pi_taxonomy/) by Jason Haddix ([Arcanum Information Security](https://arcanum-sec.com/))."*
+
+Full license details are available in the [LICENSE.md](LICENSE.md) file.
