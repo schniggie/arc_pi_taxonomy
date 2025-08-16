@@ -44,7 +44,8 @@ Respond with a JSON object with two keys: 'verdict' (string, one of 'success', '
 
     try:
         console.print(f"  [cyan]Evaluating response for {payload.intent}/{payload.technique}/{payload.evasion}...[/]", end="")
-        llm_response_str = query_llm(prompt, model)
+        messages = [{"role": "user", "content": prompt}]
+        llm_response_str = query_llm(messages, model)
 
         # The LLM often wraps the JSON in markdown, so we extract it.
         json_match = re.search(r"```json\s*(\{.*?\})\s*```", llm_response_str, re.DOTALL)
