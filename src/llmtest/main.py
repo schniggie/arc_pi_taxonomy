@@ -6,7 +6,6 @@ from rich.console import Console
 from rich.table import Table
 from typing import List, Optional
 
-from llmtest.parsing import parse_curl_command # Will be removed
 from llmtest.taxonomy import load_taxonomy
 from llmtest.payloads import generate_payloads
 from llmtest.execution import execute_test
@@ -16,7 +15,7 @@ from llmtest.model import RequestTemplate, TestConfig, ParsedRequest, TestResult
 app = typer.Typer(help="A slim LLM inference testing tool for prompt injection.")
 console = Console()
 
-DB_FILE = "/app/llmtest_db.json"
+DB_FILE = "llmtest_db.json"
 
 def get_db_data():
     """Reads the JSON database file and returns its content."""
@@ -59,10 +58,8 @@ def load(
     body_obj = data
     if data:
         try:
-            # Try to parse data as JSON
             body_obj = json.loads(data)
         except json.JSONDecodeError:
-            # Keep as string if not valid JSON
             body_obj = data
 
     parsed_request = ParsedRequest(
@@ -72,7 +69,6 @@ def load(
         body=body_obj
     )
 
-    # Create a raw_request string for display/logging
     raw_request_str = f"METHOD: {method}\nURL: {url}\nHEADERS: {headers_dict}\nBODY: {data}"
 
     template = RequestTemplate(
@@ -97,10 +93,17 @@ def run(
     intent: str = typer.Option(..., "--intent", help="Attack intent from the taxonomy (e.g., 'jailbreak')."),
     goal: str = typer.Option(..., "--goal", help="A description of the attack's goal."),
     max_payloads: int = typer.Option(10, "--max-payloads", help="Maximum number of payloads to generate."),
+    model: str = typer.Option("z-ai/glm-4.5-air:free", "--model", help="The LLM model to use for generation and evaluation."),
 ):
     """
     Run an attack based on the loaded request template and a specified intent.
     """
+    # Check for API key before doing anything else
+    if not os.environ.get("OPENROUTER_API_KEY"):
+        console.print("[bold red]Error: OPENROUTER_API_KEY environment variable not set.[/]")
+        console.print("Please set the environment variable to your OpenRouter API key.")
+        raise typer.Exit(code=1)
+
     db_data = get_db_data()
 
     if not db_data.get('template'):
@@ -114,8 +117,8 @@ def run(
     taxonomy = load_taxonomy()
 
     test_config = TestConfig(attack_intent=intent, goal_description=goal, max_payloads=max_payloads)
-    console.print(f"Generating up to {max_payloads} payloads for intent '[magenta]{intent}[/]'...")
-    payloads = generate_payloads(taxonomy, test_config, goal)
+    console.print(f"Generating up to {max_payloads} payloads for intent '[magenta]{intent}[/]' using model '[blue]{model}[/]'...")
+    payloads = generate_payloads(taxonomy, test_config, goal, model)
     if not payloads:
         console.print(f"[bold red]Could not generate payloads. Is the intent '{intent}' correct?[/]")
         raise typer.Exit(code=1)
@@ -128,7 +131,7 @@ def run(
             status.update(f"Running test {i+1}/{len(payloads)} for technique '[blue]{pld.technique}[/]'...")
             try:
                 response = execute_test(request_template, pld)
-                result = evaluate_response(response, pld, goal)
+                result = evaluate_response(response, pld, goal, model)
                 results.append(result.model_dump())
             except ValueError as e:
                 console.print(f"[bold red]Skipping test due to error:[/] {e}")
