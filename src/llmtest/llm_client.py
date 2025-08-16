@@ -8,12 +8,14 @@ class LLMClientError(Exception):
     """Custom exception for LLM client errors."""
     pass
 
-def query_llm(prompt: str, model: str) -> str:
+from typing import List, Dict
+
+def query_llm(messages: List[Dict[str, str]], model: str) -> str:
     """
     Queries the specified LLM model via the OpenRouter API.
 
     Args:
-        prompt: The prompt to send to the LLM.
+        messages: A list of message dictionaries (e.g., [{"role": "user", "content": ...}]).
         model: The name of the model to query.
 
     Returns:
@@ -34,9 +36,7 @@ def query_llm(prompt: str, model: str) -> str:
 
     data = {
         "model": model,
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
+        "messages": messages
     }
 
     try:
@@ -63,10 +63,10 @@ if __name__ == '__main__':
     # To run this, you must have the OPENROUTER_API_KEY environment variable set.
     # e.g., OPENROUTER_API_KEY="..." python3 src/llmtest/llm_client.py
 
-    test_prompt = "What is the capital of France? Respond with just the name of the city."
+    test_messages = [{"role": "user", "content": "What is the capital of France? Respond with just the name of the city."}]
     test_model = "z-ai/glm-4.5-air:free"
 
-    print(f"Querying model '{test_model}' with prompt: '{test_prompt}'")
+    print(f"Querying model '{test_model}' with messages: {test_messages}")
 
     try:
         # Note: This will make a real API call if the key is set.
@@ -76,7 +76,7 @@ if __name__ == '__main__':
             print("\nSkipping live test: OPENROUTER_API_KEY not set.")
             print("To run a live test, set the environment variable.")
         else:
-            response_content = query_llm(test_prompt, test_model)
+            response_content = query_llm(test_messages, test_model)
             print(f"\nResponse from LLM: '{response_content}'")
             assert "paris" in response_content.lower()
             print("\nAssertion passed: Response contains 'paris'.")

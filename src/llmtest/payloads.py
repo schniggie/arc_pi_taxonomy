@@ -43,7 +43,8 @@ Generate only the payload content itself, without any explanation or preamble.""
 
         try:
             console.print(f"  [yellow]Generating payload for {intent}/{technique}/{evasion}...[/]", end="")
-            content = query_llm(prompt, model)
+            messages = [{"role": "user", "content": prompt}]
+            content = query_llm(messages, model)
             console.print("[bold green]✓[/]")
 
             payload = Payload(
