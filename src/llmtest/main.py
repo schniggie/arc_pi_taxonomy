@@ -15,6 +15,21 @@ from llmtest.model import RequestTemplate, TestConfig, ParsedRequest, TestResult
 app = typer.Typer(help="A slim LLM inference testing tool for prompt injection.")
 console = Console()
 
+# --- Global State ---
+state = {"debug": False}
+
+@app.callback()
+def main(
+    ctx: typer.Context,
+    debug: bool = typer.Option(False, "--debug", help="Enable debug mode for verbose logging.")
+):
+    """
+    Main callback to handle global options like --debug.
+    """
+    if debug:
+        state["debug"] = True
+        console.print("[bold yellow]Debug mode is ON[/bold yellow]")
+
 DB_FILE = "llmtest_db.json"
 
 def get_db_data():
@@ -83,6 +98,12 @@ def load(
     db_data['results'] = []
     write_db_data(db_data)
 
+    if state["debug"]:
+        from rich.pretty import pprint
+        console.print("\n[bold yellow]--- Request Template (Debug) ---[/bold yellow]")
+        pprint(template)
+        console.print("[bold yellow]-----------------------------[/bold yellow]\n")
+
     console.print(f"[bold green]✓ Request template loaded and saved.[/]")
     console.print(f"  URL: [cyan]{url}[/]")
     console.print(f"  Injection point: [cyan]{inject}[/]")
@@ -118,11 +139,22 @@ def run(
 
     test_config = TestConfig(attack_intent=intent, goal_description=goal, max_payloads=max_payloads)
     console.print(f"Generating up to {max_payloads} payloads for intent '[magenta]{intent}[/]' using model '[blue]{model}[/]'...")
-    payloads = generate_payloads(taxonomy, test_config, goal, model)
+    payloads = generate_payloads(taxonomy, test_config, goal, model, debug=state["debug"])
     if not payloads:
         console.print(f"[bold red]Could not generate payloads. Is the intent '{intent}' correct?[/]")
         raise typer.Exit(code=1)
     console.print(f"Generated {len(payloads)} payloads.")
+
+    if state["debug"]:
+        from rich.pretty import pprint
+        console.print("\n[bold yellow]--- Generated Payloads (Debug) ---[/bold yellow]")
+        for pld in payloads:
+            console.print(f"Intent: {pld.intent}, Technique: {pld.technique}, Evasion: {pld.evasion}")
+            console.print("Content:")
+            pprint(pld.content)
+            console.print("---")
+        console.print("[bold yellow]--------------------------------[/bold yellow]\n")
+
 
     console.print("\n--- Starting Test Execution ---")
     results = []
@@ -131,7 +163,7 @@ def run(
             status.update(f"Running test {i+1}/{len(payloads)} for technique '[blue]{pld.technique}[/]'...")
             try:
                 response = execute_test(request_template, pld)
-                result = evaluate_response(response, pld, goal, model)
+                result = evaluate_response(response, pld, goal, model, debug=state["debug"])
                 results.append(result.model_dump())
             except ValueError as e:
                 console.print(f"[bold red]Skipping test due to error:[/] {e}")
