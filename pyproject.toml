@@ -9,7 +9,7 @@ python = "^3.9"
 typer = "^0.9.0"
 requests = "^2.31.0"
 pydantic = "^2.4.2"
-curlconverter = "^1.0.1"
+uncurl = "^0.0.11"
 rich = "^13.5.2"
 
 [tool.poetry.dev-dependencies]

@@ -4,6 +4,7 @@ import copy
 from typing import Dict, Any, List
 import requests
 from llmtest.model import RequestTemplate, Payload, TestResult, Verdict
+from llmtest.curl_parser import FuzzCurlParser
 
 def set_value_at_path(data: Dict[str, Any], path: str, value: Any):
     """
@@ -39,21 +40,42 @@ def set_value_at_path(data: Dict[str, Any], path: str, value: Any):
             raise TypeError(f"Cannot set key '{last_key}' on a non-dictionary element.")
 
 
-def execute_test(request_template: RequestTemplate, payload: Payload) -> requests.Response:
+def execute_test(request_template: RequestTemplate, payload: Payload, debug: bool = False) -> requests.Response:
     """
     Injects a payload into a request template and executes the HTTP request.
+    Supports both legacy injection (via path) and FUZZ-based injection.
     """
-    # Deep copy to avoid modifying the original template's parsed request
-    request_data = copy.deepcopy(request_template.parsed_request.model_dump())
+    if debug:
+        from rich.console import Console
+        console = Console()
 
-    # Inject the payload
-    try:
-        set_value_at_path(request_data, request_template.injection_point, payload.content)
-    except (KeyError, IndexError, TypeError) as e:
-        # If injection fails, we can't proceed with this test.
-        # We can return a mock response indicating failure or raise an exception.
-        # For now, let's raise a specific error.
-        raise ValueError(f"Failed to inject payload at '{request_template.injection_point}': {e}") from e
+    # Check if this is FUZZ-based injection
+    if request_template.injection_point == "FUZZ_BASED":
+        # Use FUZZ-based injection
+        if debug:
+            console.print(f"    [dim]Using FUZZ-based injection[/]")
+        parser = FuzzCurlParser()
+        injected_request = parser.inject_payload(request_template.parsed_request, payload.content)
+        request_data = injected_request.model_dump()
+
+        if debug:
+            console.print(f"    [dim]Injected request URL: {request_data['url']}[/]")
+            console.print(f"    [dim]Injected request body: {str(request_data.get('body', 'None'))[:100]}...[/]")
+    else:
+        # Legacy path-based injection
+        if debug:
+            console.print(f"    [dim]Using legacy injection at: {request_template.injection_point}[/]")
+        # Deep copy to avoid modifying the original template's parsed request
+        request_data = copy.deepcopy(request_template.parsed_request.model_dump())
+
+        # Inject the payload
+        try:
+            set_value_at_path(request_data, request_template.injection_point, payload.content)
+        except (KeyError, IndexError, TypeError) as e:
+            # If injection fails, we can't proceed with this test.
+            # We can return a mock response indicating failure or raise an exception.
+            # For now, let's raise a specific error.
+            raise ValueError(f"Failed to inject payload at '{request_template.injection_point}': {e}") from e
 
     # Prepare arguments for requests
     method = request_data['method']

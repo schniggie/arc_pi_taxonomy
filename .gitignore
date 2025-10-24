@@ -29,4 +29,5 @@ htmlcov/
 
 # Local data
 results.json
+llmtest_db.json
 *.db

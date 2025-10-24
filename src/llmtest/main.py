@@ -11,6 +11,7 @@ from llmtest.payloads import generate_payloads
 from llmtest.execution import execute_test
 from llmtest.evaluation import evaluate_response
 from llmtest.model import RequestTemplate, TestConfig, ParsedRequest, TestResult
+from llmtest.curl_parser import parse_curl_with_fuzz, CurlParseError, FuzzLocation
 
 app = typer.Typer(help="A slim LLM inference testing tool for prompt injection.")
 console = Console()
@@ -52,61 +53,133 @@ def write_db_data(data):
 
 @app.command()
 def load(
-    url: str = typer.Option(..., "--url", help="The target URL."),
+    # New curl import option
+    from_curl: Optional[str] = typer.Option(None, "--from-curl", help="Load from curl command with FUZZ keywords for injection points."),
+
+    # Existing manual options (for backward compatibility)
+    url: Optional[str] = typer.Option(None, "--url", help="The target URL."),
     method: str = typer.Option("POST", "--method", "-X", help="HTTP method."),
     header: Optional[List[str]] = typer.Option(None, "--header", "-H", help="Headers in 'Key: Value' format. Can be used multiple times."),
     data: Optional[str] = typer.Option(None, "--data", "-d", help="The request body as a string."),
-    inject: str = typer.Option(..., "--inject", help="Injection point path, e.g., 'body.messages[1].content'."),
+    inject: Optional[str] = typer.Option(None, "--inject", help="Injection point path, e.g., 'body.messages[1].content'."),
 ):
     """
-    Load a request template from its components.
+    Load a request template either from a curl command (with FUZZ keywords) or from individual components.
+
+    Examples:
+      # Load from curl with FUZZ injection points
+      llmtest load --from-curl 'curl -X POST https://api.openai.com/v1/chat/completions -H "Authorization: Bearer FUZZ" -d "{\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}"'
+
+      # Load manually (legacy method)
+      llmtest load --url https://api.example.com --inject "body.messages[0].content" --data '{"messages":[{"content":"test"}]}'
     """
-    console.print("Loading request template from components...")
 
-    headers_dict = {}
-    if header:
-        for h in header:
-            if ':' in h:
-                key, value = h.split(':', 1)
-                headers_dict[key.strip()] = value.strip()
+    if from_curl:
+        # New FUZZ-based curl import
+        console.print("Loading request template from curl command with FUZZ detection...")
 
-    body_obj = data
-    if data:
         try:
-            body_obj = json.loads(data)
-        except json.JSONDecodeError:
-            body_obj = data
+            parsed_request, fuzz_locations = parse_curl_with_fuzz(from_curl)
 
-    parsed_request = ParsedRequest(
-        method=method.upper(),
-        url=url,
-        headers=headers_dict,
-        body=body_obj
-    )
+            if state["debug"]:
+                console.print(f"\n[bold yellow]--- FUZZ Locations Detected (Debug) ---[/bold yellow]")
+                for loc in fuzz_locations:
+                    console.print(f"  {loc.location_type}: {loc.key} = '{loc.original_value}'")
+                console.print("[bold yellow]------------------------------------[/bold yellow]\n")
 
-    raw_request_str = f"METHOD: {method}\nURL: {url}\nHEADERS: {headers_dict}\nBODY: {data}"
+            # For FUZZ-based injection, we use a special injection point format
+            injection_point = "FUZZ_BASED"
 
-    template = RequestTemplate(
-        id=str(uuid.uuid4()),
-        raw_request=raw_request_str,
-        parsed_request=parsed_request,
-        injection_point=inject,
-    )
+            template = RequestTemplate(
+                id=str(uuid.uuid4()),
+                raw_request=from_curl,
+                parsed_request=parsed_request,
+                injection_point=injection_point,
+            )
 
-    db_data = get_db_data()
-    db_data['template'] = template.model_dump()
-    db_data['results'] = []
-    write_db_data(db_data)
+            db_data = get_db_data()
+            db_data['template'] = template.model_dump()
+            db_data['fuzz_locations'] = [
+                {
+                    'location_type': loc.location_type,
+                    'key': loc.key,
+                    'original_value': loc.original_value
+                } for loc in fuzz_locations
+            ]
+            db_data['results'] = []
+            write_db_data(db_data)
+
+            console.print(f"[bold green]✓ Request template loaded from curl command.[/]")
+            console.print(f"  URL: [cyan]{parsed_request.url}[/]")
+            console.print(f"  Method: [cyan]{parsed_request.method}[/]")
+            console.print(f"  FUZZ injection points detected: [cyan]{len(fuzz_locations)}[/]")
+
+            for i, loc in enumerate(fuzz_locations, 1):
+                console.print(f"    {i}. {loc.location_type}: [magenta]{loc.key}[/]")
+
+        except CurlParseError as e:
+            console.print(f"[bold red]✗ Failed to parse curl command:[/] {e}")
+            console.print(f"[yellow]Make sure your curl command contains FUZZ keywords at injection points.[/]")
+            console.print(f"[yellow]Example: curl -X POST https://api.com/chat -d '{{\"message\":\"FUZZ\"}}' [/]")
+            raise typer.Exit(code=1)
+
+    else:
+        # Legacy manual loading (for backward compatibility)
+        if not url:
+            console.print(f"[bold red]Error:[/] Either --from-curl or --url must be provided.")
+            console.print(f"[yellow]Use --from-curl for modern FUZZ-based injection or --url for legacy manual setup.[/]")
+            raise typer.Exit(code=1)
+
+        if not inject:
+            console.print(f"[bold red]Error:[/] --inject is required when using manual loading (--url).")
+            raise typer.Exit(code=1)
+
+        console.print("Loading request template from components...")
+
+        headers_dict = {}
+        if header:
+            for h in header:
+                if ':' in h:
+                    key, value = h.split(':', 1)
+                    headers_dict[key.strip()] = value.strip()
+
+        body_obj = data
+        if data:
+            try:
+                body_obj = json.loads(data)
+            except json.JSONDecodeError:
+                body_obj = data
+
+        parsed_request = ParsedRequest(
+            method=method.upper(),
+            url=url,
+            headers=headers_dict,
+            body=body_obj
+        )
+
+        raw_request_str = f"METHOD: {method}\nURL: {url}\nHEADERS: {headers_dict}\nBODY: {data}"
+
+        template = RequestTemplate(
+            id=str(uuid.uuid4()),
+            raw_request=raw_request_str,
+            parsed_request=parsed_request,
+            injection_point=inject,
+        )
+
+        db_data = get_db_data()
+        db_data['template'] = template.model_dump()
+        db_data['results'] = []
+        write_db_data(db_data)
+
+        console.print(f"[bold green]✓ Request template loaded and saved.[/]")
+        console.print(f"  URL: [cyan]{url}[/]")
+        console.print(f"  Injection point: [cyan]{inject}[/]")
 
     if state["debug"]:
         from rich.pretty import pprint
         console.print("\n[bold yellow]--- Request Template (Debug) ---[/bold yellow]")
         pprint(template)
         console.print("[bold yellow]-----------------------------[/bold yellow]\n")
-
-    console.print(f"[bold green]✓ Request template loaded and saved.[/]")
-    console.print(f"  URL: [cyan]{url}[/]")
-    console.print(f"  Injection point: [cyan]{inject}[/]")
 
 
 @app.command()
@@ -158,16 +231,49 @@ def run(
 
     console.print("\n--- Starting Test Execution ---")
     results = []
-    with console.status("[bold green]Running tests...[/]") as status:
+
+    if state["debug"]:
+        # In debug mode, don't use status spinner so we can see all output
         for i, pld in enumerate(payloads):
-            status.update(f"Running test {i+1}/{len(payloads)} for technique '[blue]{pld.technique}[/]'...")
+            console.print(f"\n[bold cyan]Running test {i+1}/{len(payloads)} for technique '[blue]{pld.technique}[/]'...[/]")
             try:
-                response = execute_test(request_template, pld)
+                console.print(f"  [yellow]Executing HTTP request...[/]")
+                response = execute_test(request_template, pld, debug=True)
+
+                console.print(f"  [yellow]HTTP Response: Status {response.status_code}[/]")
+                if state["debug"] and response.status_code >= 400:
+                    console.print(f"  [red]Response body: {response.text[:200]}...[/]")
+
+                console.print(f"  [yellow]Starting evaluation...[/]")
                 result = evaluate_response(response, pld, goal, model, debug=state["debug"])
                 results.append(result.model_dump())
+
+                console.print(f"  [green]✓ Test completed - Verdict: {result.verdict.value} (confidence: {result.confidence:.2f})[/]")
+
             except ValueError as e:
-                console.print(f"[bold red]Skipping test due to error:[/] {e}")
+                console.print(f"  [bold red]✗ Skipping test due to error:[/] {e}")
                 continue
+            except Exception as e:
+                console.print(f"  [bold red]✗ Unexpected error during test:[/] {e}")
+                if state["debug"]:
+                    import traceback
+                    console.print(f"  [red]Stack trace: {traceback.format_exc()}[/]")
+                continue
+    else:
+        # Normal mode with status spinner
+        with console.status("[bold green]Running tests...[/]") as status:
+            for i, pld in enumerate(payloads):
+                status.update(f"Running test {i+1}/{len(payloads)} for technique '[blue]{pld.technique}[/]'...")
+                try:
+                    response = execute_test(request_template, pld)
+                    result = evaluate_response(response, pld, goal, model, debug=state["debug"])
+                    results.append(result.model_dump())
+                except ValueError as e:
+                    console.print(f"[bold red]Skipping test due to error:[/] {e}")
+                    continue
+                except Exception as e:
+                    console.print(f"[bold red]Unexpected error:[/] {e}")
+                    continue
 
     db_data['results'] = results
     write_db_data(db_data)
