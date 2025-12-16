@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcanum PI Taxonomy - Prompt Injection Attack Classification</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-grid"></div>
+
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Arcanum PI Taxonomy</h1>
+                    <p class="tagline">Prompt Injection Attack Classification System</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="total-count">0</span>
+                    <span class="stat-label">Total Entries</span>
+                </div>
+                <div class="stat-item intents">
+                    <span class="stat-number" id="intents-count">0</span>
+                    <span class="stat-label">Intents</span>
+                </div>
+                <div class="stat-item techniques">
+                    <span class="stat-number" id="techniques-count">0</span>
+                    <span class="stat-label">Techniques</span>
+                </div>
+                <div class="stat-item evasions">
+                    <span class="stat-number" id="evasions-count">0</span>
+                    <span class="stat-label">Evasions</span>
+                </div>
+                <div class="stat-item inputs">
+                    <span class="stat-number" id="inputs-count">0</span>
+                    <span class="stat-label">Inputs</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="filter-nav">
+        <div class="filter-container">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="search-input" placeholder="Search taxonomy...">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn intents" data-filter="intents">
+                    <span class="filter-dot"></span>
+                    Intents
+                </button>
+                <button class="filter-btn techniques" data-filter="techniques">
+                    <span class="filter-dot"></span>
+                    Techniques
+                </button>
+                <button class="filter-btn evasions" data-filter="evasions">
+                    <span class="filter-dot"></span>
+                    Evasions
+                </button>
+                <button class="filter-btn inputs" data-filter="inputs">
+                    <span class="filter-dot"></span>
+                    Inputs
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="category-section" id="intents-section">
+            <div class="section-header">
+                <div class="section-icon intents">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="6"/>
+                        <circle cx="12" cy="12" r="2"/>
+                    </svg>
+                </div>
+                <div class="section-title">
+                    <h2>Attack Intents</h2>
+                    <p>Goals and objectives of prompt injection attacks</p>
+                </div>
+            </div>
+            <div class="cards-grid" id="intents-grid"></div>
+        </section>
+
+        <section class="category-section" id="techniques-section">
+            <div class="section-header">
+                <div class="section-icon techniques">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                    </svg>
+                </div>
+                <div class="section-title">
+                    <h2>Attack Techniques</h2>
+                    <p>Methods used to execute prompt injection attacks</p>
+                </div>
+            </div>
+            <div class="cards-grid" id="techniques-grid"></div>
+        </section>
+
+        <section class="category-section" id="evasions-section">
+            <div class="section-header">
+                <div class="section-icon evasions">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                </div>
+                <div class="section-title">
+                    <h2>Attack Evasions</h2>
+                    <p>Obfuscation methods to avoid detection</p>
+                </div>
+            </div>
+            <div class="cards-grid" id="evasions-grid"></div>
+        </section>
+
+        <section class="category-section" id="inputs-section">
+            <div class="section-header">
+                <div class="section-icon inputs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <path d="M22 6l-10 7L2 6"/>
+                    </svg>
+                </div>
+                <div class="section-title">
+                    <h2>Attack Inputs</h2>
+                    <p>Attack surfaces and input vectors for injection</p>
+                </div>
+            </div>
+            <p class="section-description">Prompt injection can occur both directly (user input) and indirectly (via external data sources). This section captures interesting attack surfaces and input vectors for prompt injection attacks.</p>
+            <div class="cards-grid" id="inputs-grid"></div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <p>Based on the <a href="https://github.com/Arcanum-Sec/arc_pi_taxonomy" target="_blank">Arcanum PI Taxonomy</a></p>
+                <p class="attribution">Created by Jason Haddix & Arcanum Information Security</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/Arcanum-Sec/arc_pi_taxonomy" target="_blank" class="github-link">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    View on GitHub
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal for card details -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="detail-modal">
+            <button class="modal-close" id="modal-close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+            <div class="modal-header">
+                <span class="modal-category" id="modal-category"></span>
+                <h2 class="modal-title" id="modal-title"></h2>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3>Description</h3>
+                    <p id="modal-description"></p>
+                </div>
+                <div class="modal-section" id="modal-ideas-section">
+                    <h3>General Ideas</h3>
+                    <ul id="modal-ideas" class="ideas-list"></ul>
+                </div>
+                <div class="modal-section" id="modal-examples-section">
+                    <h3 id="modal-examples-heading">Example Prompts</h3>
+                    <ul id="modal-examples"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data/taxonomy.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
