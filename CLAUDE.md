@@ -14,10 +14,50 @@ This is a Python-based LLM inference testing tool specifically designed for prom
 
 - **`llmtest/main.py`**: CLI application built with Typer that provides three main commands: `load`, `run`, and `export`
 - **`llmtest/taxonomy.py`**: Loads attack taxonomy from markdown files organized in three categories (intents, techniques, evasions)
-- **`llmtest/payloads.py`**: Generates attack payloads by combining taxonomy elements with LLM assistance
+- **`llmtest/payloads.py`**: Generates attack payloads by combining taxonomy elements with LLM assistance (sequential)
+- **`llmtest/async_payloads.py`**: **NEW** - Async/parallel payload generation with 10x performance improvement
 - **`llmtest/execution.py`**: Executes HTTP requests with injected payloads
-- **`llmtest/evaluation.py`**: Uses LLM to evaluate attack success/failure
+- **`llmtest/evaluation.py`**: Uses LLM to evaluate attack success/failure (sequential)
+- **`llmtest/async_evaluation.py`**: **NEW** - Async/parallel response evaluation with batch processing
+- **`llmtest/llm_client.py`**: Synchronous LLM API client
+- **`llmtest/async_llm_client.py`**: **NEW** - Async LLM client with connection pooling and HTTP/2 support
 - **`llmtest/model.py`**: Pydantic models defining data structures
+
+### Performance Optimization (Async/Parallel Execution)
+
+**Major Performance Improvement**: The tool now supports async/parallel execution for LLM API calls, providing approximately **10x faster** test runs compared to sequential execution.
+
+#### Key Features:
+- **Parallel Payload Generation**: All payloads are generated concurrently instead of sequentially
+- **Batch Response Evaluation**: All responses are evaluated in parallel
+- **Connection Pooling**: Reuses HTTP connections with HTTP/2 support for better performance
+- **Rate Limiting**: Configurable concurrency control to respect API rate limits (default: 10 concurrent)
+- **Backward Compatible**: Original sequential mode still available via `--sequential` flag
+
+#### Performance Comparison:
+```
+Sequential Mode (original):
+- 10 payloads × 60s timeout = ~600s generation
+- 10 evaluations × 60s timeout = ~600s evaluation
+- Total: ~20 minutes
+
+Parallel Mode (new, default):
+- 10 payloads in parallel = ~60s generation
+- 10 evaluations in parallel = ~60s evaluation
+- Total: ~2-3 minutes (10x faster!)
+```
+
+#### Usage:
+```bash
+# Default: Parallel async execution (10x faster)
+poetry run llmtest run --intent "jailbreak" --goal "Bypass safety guardrails"
+
+# Control concurrency (useful for API rate limits)
+poetry run llmtest run --intent "jailbreak" --goal "Test" --max-concurrent 5
+
+# Use sequential execution (original behavior)
+poetry run llmtest run --intent "jailbreak" --goal "Test" --sequential
+```
 
 ### Taxonomy Structure
 
