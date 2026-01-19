@@ -83,6 +83,12 @@ def execute_test(request_template: RequestTemplate, payload: Payload, debug: boo
     headers = request_data['headers']
     body = request_data.get('body')
 
+    # Fix URL if missing scheme (http:// or https://)
+    if not url.startswith(('http://', 'https://')):
+        url = f'https://{url}'
+        if debug:
+            console.print(f"    [dim]Added https:// scheme to URL: {url}[/]")
+
     # `requests` expects `data` for form data and `json` for JSON
     data_arg = None
     json_arg = None
