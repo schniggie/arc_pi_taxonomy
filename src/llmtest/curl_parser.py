@@ -60,6 +60,10 @@ class FuzzCurlParser:
         url = parsed.url
         headers = dict(parsed.headers) if parsed.headers else {}
 
+        # Ensure URL has a scheme (http:// or https://)
+        if url and not url.startswith(('http://', 'https://')):
+            url = f'https://{url}'
+
         # Check for FUZZ in URL
         url, url_fuzz_found = self._extract_url_fuzz(url)
 
