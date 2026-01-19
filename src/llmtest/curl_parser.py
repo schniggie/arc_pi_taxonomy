@@ -76,11 +76,18 @@ class FuzzCurlParser:
 
         if parsed.data:
             if isinstance(parsed.data, dict):
-                # JSON data
+                # JSON data already parsed as dict
                 body, body_fuzz_found = self._extract_json_fuzz(parsed.data)
             else:
-                # String data (could be form data, plain text, etc.)
-                body, body_fuzz_found = self._extract_string_fuzz(parsed.data, headers.get('Content-Type', ''))
+                # String data - try to parse as JSON first
+                try:
+                    # Attempt to parse string as JSON
+                    json_data = json.loads(parsed.data)
+                    # Successfully parsed as JSON, treat it as JSON
+                    body, body_fuzz_found = self._extract_json_fuzz(json_data)
+                except (json.JSONDecodeError, TypeError):
+                    # Not valid JSON, treat as string (form data, plain text, etc.)
+                    body, body_fuzz_found = self._extract_string_fuzz(parsed.data, headers.get('Content-Type', ''))
 
         # Validate that at least one FUZZ was found
         total_fuzz_found = url_fuzz_found + header_fuzz_found + body_fuzz_found
